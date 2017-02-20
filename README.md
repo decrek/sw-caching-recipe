@@ -6,6 +6,7 @@ Cache first strategy, promise.race, update cache, handler for onCacheUpdated and
 
 Based on sw-toolbox
 
-Install: `npm install`
-Build: `npm run build`
-Watch and serve: 'npm start'
+- **Install**: `npm install`
+- **Build**: `npm run build`
+- **Watch**: `npm watch`
+- **Serve**: `npm start`

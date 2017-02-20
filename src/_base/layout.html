@@ -34,5 +34,13 @@
 
 {% block body %}{% endblock %}
 {% block scripts_extra %}{% endblock %}
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-twerker.js')
+            .then(function(registration) { return registration.update(); });
+    }
+</script>
+
 </body>
 </html>

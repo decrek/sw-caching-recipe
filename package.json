@@ -10,8 +10,9 @@
     "build:html": "node tasks/html.js",
     "build:scripts": "node tasks/scripts.js",
     "build:styles": "node tasks/styles.js",
+    "build:service-worker": "ncp node_modules/sw-toolbox/sw-toolbox.js dist/sw-toolbox.js && ncp src/service-twerker.js dist/service-twerker.js",
     "prebuild": "rimraf dist/ && npm run copy",
-    "postbuild": "npm-run-all --sequential critical revision compress",
+    "postbuild": "npm-run-all --sequential critical revision",
     "compress": "node tasks/compress.js",
     "copy": "mkdirp dist/ && ncp src/ dist/",
     "critical": "node tasks/critical.js",
@@ -19,7 +20,8 @@
     "watch": "npm-run-all --parallel watch:*",
     "watch:html": "chokidar 'src/**/*.html' --command 'npm run build:html'",
     "watch:scripts": "chokidar 'src/**/*.js' --command 'npm run build:scripts'",
-    "watch:styles": "chokidar 'src/**/*.css' --command 'npm run build:styles'"
+    "watch:styles": "chokidar 'src/**/*.css' --command 'npm run build:styles'",
+    "watch:service-worker": "chokidar 'src/service-twerker.js' --command 'npm run build:service-worker'"
   },
   "author": "",
   "license": "ISC",
@@ -56,6 +58,7 @@
   "dependencies": {
     "body-parser": "1.15.2",
     "express": "4.14.0",
-    "nunjucks": "3.0.0"
+    "nunjucks": "3.0.0",
+    "sw-toolbox": "3.4.0"
   }
 }

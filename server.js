@@ -15,7 +15,7 @@ app.set('etag', true);
 app.use((req, res, next) => { res.removeHeader('X-Powered-By'); next(); });
 app.use(cookieParser());
 
-app.use(shrinkRay({ filter: (req) => req.headers['accept'].includes('text/html') }));
+//app.use(shrinkRay({ filter: (req) => req.headers['accept'].includes('text/html') }));
 
 // static routes
 app.use(routeStatic);
@@ -25,8 +25,9 @@ app.use('/static', (req, res, next) => {
     res.setHeader('Cache-Control', 'max-age=' + oneYear + ', immutable');
     next();
 });
-app.use('/static/*', useCompressed);
+//app.use('/static/*', useCompressed);
 app.use('/static', express.static(path.join(__dirname, baseDir), { etag: false, lastModified: false }));
+app.use('/service-twerker.js', express.static(path.join(__dirname, baseDir), { etag: false, lastModified: false }));
 
 // dynamic pages
 app.use(redirectIndices);
