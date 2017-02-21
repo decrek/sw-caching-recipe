@@ -21,6 +21,12 @@ app.use('/static', (req, res, next) => {
     res.setHeader('Cache-Control', 'max-age=' + oneYear + ', immutable');
     next();
 });
+
+app.use('/static/service-twerker.js', (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache');
+    next();
+});
+
 app.use('/static', express.static(path.join(__dirname, baseDir), { etag: false, lastModified: false }));
 
 // dynamic pages
