@@ -1,10 +1,6 @@
-# SW Caching Recipe
+# Service worker caching recipe
 
-## Goal
-
-Cache first strategy, promise.race, update cache, handler for onCacheUpdated and/or onStaleContent.
-
-Based on sw-toolbox
+A stale-while-revalidate caching strategy using [sw-toolbox](https://github.com/GoogleChrome/sw-toolbox).
 
 - **Install**: `npm install`
 - **Build**: `npm run build`
