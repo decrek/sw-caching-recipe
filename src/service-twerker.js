@@ -45,7 +45,7 @@
 
         // return response as fast as possible
         return Promise.race([getFromCache, fetchFromNetwork])
-            .then(() => toolbox.fastest(request, values, options));
+            .then((response) => response.clone());
     }
 
     function isStale(cachedResponse, networkResponse) {
