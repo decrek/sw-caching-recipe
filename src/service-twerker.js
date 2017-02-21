@@ -1,55 +1,71 @@
 (function (global) {
     'use strict';
 
-    // Load the sw-tookbox library.
     importScripts('sw-toolbox.js');
 
-    // Turn on debug logging, visible in the Developer Tools' console.
     global.toolbox.options.debug = true;
 
-    // precache offline fallback page
+    // precache offline fallback
     toolbox.precache(['/offline/']);
 
-    global.toolbox.router.get('/assets/images/*.*', imageHandler, {
-        cache: {
-            name: 'image-cache',
-            networkTimeoutSeconds: 3,
-            maxEntries: 100,
-            maxAgeSeconds: 7 * 24 * 60 * 60
-        }
-    });
-
+    // HTML route
     global.toolbox.router.get(/^.*\/$/, htmlHandler, {
         cache: {
             name: 'html-cache',
-            maxEntries: 25,
-            maxAgeSeconds: 7 * 24 * 60 * 60
+            maxEntries: 3,
+            maxAgeSeconds: 7 * 24 * 60 * 60,
+            onStaleContent: onStaleContentHandler
         }
     });
 
-    // By default, all requests that don't match our custom handler will use the
-    // toolbox.networkFirst cache strategy, and their responses will be stored in
-    // the default cache.
-    global.toolbox.router.default = global.toolbox.networkFirst;
-
-    function imageHandler(request, values, options) {
-        return toolbox.cacheFirst(request, values, options).catch(() => {
-            return caches.match(request.url);
-        });
-    }
+    // default caching strategy
+    global.toolbox.router.default = global.toolbox.cacheFirst;
 
     function htmlHandler(request, values, options) {
-        return toolbox.fastest(request, values, options).catch(() => {
-            return caches.match('/offline/');
-        });
+        return staleWhileRevalidate(request, values, options)
+            .catch(() => caches.match('/offline/'));
     }
 
-    // Boilerplate to ensure our service worker takes control of the page as soon
-    // as possible.
+    function onStaleContentHandler(freshResponse) {
+        console.log('stale content!', freshResponse);
+    }
+
+    function staleWhileRevalidate(request, values, options) {
+        console.log('Strategy: stale while revalidate [' + request.url + ']', options);
+
+        const getFromCache = toolbox.cacheOnly(request, values, options);
+        const fetchFromNetwork = toolbox.networkOnly(request, values, options);
+
+        // determine if content is stale
+        Promise.all([getFromCache, fetchFromNetwork])
+            .then(([cachedResponse, networkResponse]) => {
+                return isStale(cachedResponse, networkResponse)
+                    .then(isStale => isStale ? options.cache.onStaleContent(networkResponse) : console.log('fresh content!'));
+            });
+
+        // return response as fast as possible
+        return Promise.race([getFromCache, fetchFromNetwork])
+            .then(() => toolbox.fastest(request, values, options));
+    }
+
+    function isStale(cachedResponse, networkResponse) {
+        if(!cachedResponse || !networkResponse) {
+            return Promise.resolve(false);
+        }
+
+        return Promise.all([cachedResponse.text(), networkResponse.text()])
+            .then(([cachedContent, serverContent]) => {
+                const isStale = (cachedContent !== serverContent);
+                return Promise.resolve(isStale);
+            });
+    }
+
     global.addEventListener('install', function (event) {
         return event.waitUntil(global.skipWaiting());
     });
+
     global.addEventListener('activate', function (event) {
         return event.waitUntil(global.clients.claim());
     });
+
 })(self);
