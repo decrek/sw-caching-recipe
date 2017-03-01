@@ -27,24 +27,31 @@
     }
 
     function onStaleContentHandler(freshResponse) {
-        console.log('stale content!', freshResponse);
+        console.log('stale content, sending message!', freshResponse.url);
+        return broadcastToClients({
+            type: 'outdated',
+            url: 'http://localhost:3004/getting-started/'
+        });
     }
 
     function staleWhileRevalidate(request, values, options) {
         console.log('Strategy: stale while revalidate [' + request.url + ']', options);
 
-        const getFromCache = toolbox.cacheOnly(request, values, options);
-        const fetchFromNetwork = toolbox.networkOnly(request, values, options);
+        return toolbox.cacheOnly(request, values, options)
+            .then((cacheContent) => {
+                const fetchFromNetwork = toolbox.networkFirst(request, values, options);
+                fetchFromNetwork.then(networkContent => {
+                    isStale(cacheContent, networkContent)
+                        .then( isStale => {
+                            if (isStale) {
+                                return options.cache.onStaleContent(networkContent.url)
+                            }
+                        })
+                });
 
-        // determine if content is stale
-        Promise.all([getFromCache, fetchFromNetwork])
-            .then(([cachedResponse, networkResponse]) => {
-                return isStale(cachedResponse, networkResponse)
-                    .then(isStale => isStale ? options.cache.onStaleContent(networkResponse) : console.log('fresh content!'));
+                return cacheContent ? cacheContent.clone() : fetchFromNetwork;
             });
 
-        // return response as fast as possible
-        return toolbox.fastest(request, values, options);
     }
 
     function isStale(cachedResponse, networkResponse) {
@@ -57,6 +64,22 @@
                 const isStale = (cachedContent !== serverContent);
                 return Promise.resolve(isStale);
             });
+    }
+
+    /**
+     * Sends a message to all clients who have the service worker installed
+     *
+     * @param {Object} message		The message to send
+     * @returns {Promise}
+     */
+    function broadcastToClients(message) {
+        return new Promise((resolve, reject) => {
+            self.clients.matchAll().then(clientList => {
+                console.log('sending messag to: ', clientList);
+                clientList.forEach((client) => client.postMessage(message));
+                resolve();
+            }).catch(err => reject(err));
+        });
     }
 
     global.addEventListener('install', function (event) {

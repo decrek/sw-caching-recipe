@@ -35,11 +35,42 @@
 {% block body %}{% endblock %}
 {% block scripts_extra %}{% endblock %}
 
+<template data-outdated-message-template>
+    <div class="alert alert-warning alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <p><strong>Warning!</strong> This page is updated! <a class="btn btn-primary" data-outdated-message-link>Update!</a></p>
+    </div>
+</template>
+
 <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-twerker.js')
             .then(function(registration) { return registration.update(); });
     }
+
+
+    (function(){
+        'use strict';
+
+        if('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', function (event) {
+                // show notification if the outdated url is the same as current url
+                var currentPageIsOutdated = (event.data.type === 'outdated' && event.data.url === window.location.href);
+                if (currentPageIsOutdated) {
+                    showMessage();
+                }
+            }, false);
+        }
+
+        function showMessage() {
+            var body = document.body;
+            var template = document.querySelector('[data-outdated-message-template]');
+            var message = document.importNode(template.content, true);
+            message.querySelector('[data-outdated-message-link]').href = window.location.href;
+            body.insertBefore(message, body.firstChild);
+        }
+    }());
+
 </script>
 
 </body>
